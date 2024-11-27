@@ -1,0 +1,56 @@
+---
+
+- name: install Apache Tomcat
+  hosts: web
+  become: yes
+  tasks:
+
+  - name: install JAVA
+    apt:
+     name: default-jdk
+     state: present
+  
+  - name: install tomcat
+    apt:
+     name: tomcat9
+     state: present
+
+
+- name: java app
+  hosts: dev
+  become: yes
+
+  tasks:
+  - name: maven install
+    apt: 
+     name: maven 
+     state: present
+  - name: git install
+    apt:
+     name: git
+     state: present 
+  - name: git clone 
+    git:
+     repo: https://github.com/koddas/war-web-project.git
+     dest: /test/           
+     clone: yes
+  - name: running maven
+    shell:
+     cmd: "mvn -f pom.xml package"
+     chdir: /test/
+  - name: copy war
+    fetch: 
+     src: /test/target/wwp-1.0.0.war
+     dest: /tmp/
+     flat: yes
+
+
+- name: copy to tomcat
+  hosts: web
+  become: yes
+    
+  tasks:
+  - name: copy file
+    copy: 
+     src: /tmp/wwp-1.0.0.war
+     dest: /var/lib/tomcat9/webapps    
